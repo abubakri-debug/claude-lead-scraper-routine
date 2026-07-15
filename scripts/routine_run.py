@@ -9,11 +9,11 @@ cap enforced. Reads keys from environment variables (cloud secrets).
 
 Env vars expected (cloud-environment secrets):
   APIFY_TOKEN, SERPER_API_KEY, MILLIONVERIFIER_API_KEY (optional),
-  GOOGLE_SERVICE_ACCOUNT_JSON (the key file *contents*), GSHEET_ID, GSHEET_GID
+  LEAD_WEBHOOK_URL (optional — webhook_sink.py has a baked-in default)
 
 ICP scoring is a judgment step the *routine model* performs on work/icp_input.json, not this
 script. This script stops after producing the enriched, founder-verified file and prints its
-path; the routine then scores, writes icp_score/icp_reason back, and runs export + gsheets.
+path; the routine then scores, writes icp_score/icp_reason back, and runs export + webhook_sink.
 See ROUTINE_PROMPT.md for the exact sequence.
 """
 import argparse
@@ -51,16 +51,7 @@ def main():
           f"(2.5x buffer, capped 150).", flush=True)
 
     if not os.environ.get("APIFY_TOKEN") and not os.environ.get("SERPER_API_KEY"):
-        sys.exit("Missing APIFY_TOKEN and SERPER_API_KEY — add them at claude.ai/code/environments.")
-
-    # Materialize the Google service-account JSON secret to a file for gsheets.py
-    sa_json = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
-    if sa_json:
-        sa_path = os.path.join(args.workdir, "sa.json")
-        with open(sa_path, "w") as f:
-            f.write(sa_json)
-        os.chmod(sa_path, 0o600)
-        os.environ["GOOGLE_SERVICE_ACCOUNT_FILE"] = os.path.abspath(sa_path)
+        sys.exit("Missing APIFY_TOKEN and SERPER_API_KEY — add them in the routine's environment.")
 
     raw = os.path.join(args.workdir, "raw.json")
     ok = sh(["python3", f"{HERE}/serper_leads.py", "discover",

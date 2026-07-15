@@ -20,16 +20,16 @@ If you cannot find a usable location or industry, print what you received and st
 
 ## 2. Check secrets
 
-Required env vars (cloud-environment secrets): `APIFY_TOKEN` or `SERPER_API_KEY` (at least one),
-`GSHEET_ID`, `GSHEET_GID`, `GOOGLE_SERVICE_ACCOUNT_JSON`. Optional: `MILLIONVERIFIER_API_KEY`.
-If a required one is missing, print `Missing <NAME> — add at claude.ai/code/environments` and stop.
+Required env vars (cloud-environment secrets): `APIFY_TOKEN` or `SERPER_API_KEY` (at least one).
+Optional: `MILLIONVERIFIER_API_KEY`, `LEAD_WEBHOOK_URL` (defaults to the n8n webhook baked into
+`webhook_sink.py`). If a required one is missing, print `Missing <NAME>` and stop.
 
 ## 3. Run the pipeline
 
 Read `SKILL.md` for the full method, then run:
 
 ```
-pip install openpyxl google-auth >/dev/null 2>&1
+pip install openpyxl >/dev/null 2>&1
 python3 scripts/routine_run.py --count <count> --location "<location>" --industry "<industry>" --gl <country-code>
 ```
 
@@ -44,7 +44,7 @@ in `work/icp_input.json`, score 0–100 on lead-specific evidence (`categoryName
 founder/registry data, review count, chain markers). Web-search anything unclear or scoring above
 threshold. Out-of-scope industries cap at 20; hard disqualifiers = 0; chains/>500-employee firms
 are out. Write `icp_score` and a lead-specific `icp_reason` (one sentence, cite real evidence)
-back into the JSON. Do not template the reasons.
+back into `work/icp_input.json`. Do not template the reasons.
 
 ## 5. Export + verify emails last
 
@@ -57,13 +57,14 @@ Then run MillionVerifier ONLY on the exported shortlist (if the key exists), mer
 back, and re-export. Shipping rule: clear `invalid` emails; keep `unknown`/`risky`/unverified
 when the lead is ICP-fit with a correct phone (phone is the primary channel under German law).
 
-## 6. Append to the master Google Sheet
+## 6. Send leads to the webhook (n8n → Google Sheet)
 
 ```
-python3 scripts/gsheets.py append --csv output/<slug>.csv --run-label "<industry> <location> <today>"
+python3 scripts/webhook_sink.py --csv output/<slug>.csv --run-label "<industry> <location> <today>"
 ```
 
-The sheet increments per run and dedupes by place_id. Confirm the appended row count.
+Fires one POST per lead to the n8n webhook (baked into the script; override with `LEAD_WEBHOOK_URL`),
+which appends to the sheet on its end. Confirm the delivered count and report any failed POSTs.
 
 ## 7. Report honestly
 
