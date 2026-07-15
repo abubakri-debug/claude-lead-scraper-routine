@@ -1,16 +1,21 @@
 // Airtable Automation → "Run a script" action.
 // Trigger: When a record is created in "Lead Requests".
-// In the automation's script step, add input variables mapped from the trigger record:
+//
+// In the script step's LEFT panel, add these input variables (click "+ Add input variable"),
+// each mapped to the trigger record's field:
 //   count    -> field "Count"
 //   location -> field "Location"
 //   industry -> field "Industry"
-//   country  -> field "Country code"  (optional)
-// Then paste the routine Fire URL and token below (from SETUP_CHECKLIST step 5).
+//   country  -> field "Country code"   (optional)
+//
+// Then set the two constants below.
+// IMPORTANT: FIRE_URL must be the API host (api.anthropic.com), NOT the claude.ai browser URL.
+// The claude.ai/... address is Cloudflare-protected and returns a 403 "Just a moment" challenge.
 
-const FIRE_URL = "PASTE_ROUTINE_FIRE_URL_HERE";     // e.g. https://api.anthropic.com/v1/claude_code/routines/trig_01.../fire
-const FIRE_TOKEN = "PASTE_ROUTINE_TOKEN_HERE";      // per-routine bearer token (shown once)
+const FIRE_URL = "https://api.anthropic.com/v1/claude_code/routines/YOUR_TRIGGER_ID/fire";
+const FIRE_TOKEN = "PASTE_ROUTINE_TOKEN_HERE"; // the sk-ant-oat01-... token from "Generate token"
 
-const input = require("@airtable/blocks/interface"); // not used; Airtable provides input via config
+// `input` and `fetch` are globals in Airtable automation scripts — no require/import needed.
 const cfg = input.config();
 
 const count = cfg.count || 20;
