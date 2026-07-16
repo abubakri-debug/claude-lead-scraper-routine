@@ -1,42 +1,43 @@
 {
   "company": "DigitalXShift",
   "offer": "Full-service digital solutions agency, AI-and-automation-first: AI automation, chatbot development, lead generation systems, digital marketing (ads, social media, SEO), CRM setup and automation, custom automation, web design/development, and other digital services.",
+
+  "requested_industry_rule": "The industry requested for a run DEFINES the target market for that run and is treated as in-scope, even if it is not in default_target_market. Score those leads on QUALITY and fit signals — never cap or reject a lead merely because its industry isn't in the default list. Example: a run requesting 'Real Estate' should return real-estate business owners scored on quality, not zero.",
+
   "target_roles": [
     "founder", "co-founder", "owner", "Inhaber", "Inhaberin",
     "Geschäftsführer", "Geschäftsführerin", "managing director",
     "CEO of owner-led business"
   ],
-  "role_rule": "Only the founder/owner counts as a lead. Employees, marketing managers, or generic company pages are not leads.",
-  "in_scope": [
+  "role_rule": "Only the founder/owner counts as a lead. Employees, marketing managers, or generic company pages are not leads. This is mandatory on every run regardless of industry.",
+
+  "default_target_market": [
     "Agency owners: marketing, creative, design, PR, media, branding, content, video, web design agencies",
     "Consultants (broad business sense): strategy, management, sales, finance, investment, HR, industry-specific consultancies",
     "Coaches: business, executive, performance, life",
     "E-commerce business owners"
   ],
-  "out_of_scope": [
+  "default_target_market_note": "Used only when NO specific industry is requested for the run. When a run names an industry, that industry is the target instead.",
+
+  "always_exclude": [
+    "Chains and multi-location networks and their branch offices (fitness chains, franchise branches, retail/bank chains) — the local Geschäftsführer is an employee-executive, not a founder/owner. Applies to EVERY run and is never overridden by the requested industry.",
     "Companies with more than 500 employees",
-    "AI companies, AI consultancies, AI agencies",
-    "Automation agencies (owners and employees)",
-    "IT companies, software development shops, dev agencies, IT services/consulting",
-    "Process optimization, business process / workflow / automation consultancies",
-    "Anyone whose own offer overlaps with ours — competitors, not clients",
-    "Staffing/temp/recruitment agencies (Zeitarbeit, Personaldienstleister) and employment centers",
-    "Public institutions, chambers (IHK/HWK), nonprofits, associations",
-    "Franchise branches with no local decision-maker",
-    "Chains and multi-location networks (fitness chains, studio networks, retail chains) — the local Geschäftsführer is a chain executive, not a founder"
+    "Businesses that are inactive, in liquidation, or deleted per registry",
+    "Direct competitors: businesses whose PRIMARY offering is the same AI-automation / digital-agency service we sell. A requested target industry is a potential client, not a competitor — only exclude a lead as a competitor if selling to them makes no sense because they already do exactly what we do."
   ],
+
+  "hard_disqualifiers": [
+    "Founder / owner not identifiable (mandatory — no founder, not a lead)",
+    "Placeholder, parked, or unfinished website",
+    "No phone number (phone is the primary channel: German law restricts cold email, calls come first). A missing/unverified email is OK; a missing phone is a disqualifier."
+  ],
+
   "firmographics": {
     "employees_ideal": [2, 50],
     "employees_max": 500,
-    "revenue_note": "Solo to lower-mid-market. Missing revenue/employee data is NOT disqualifying — score on available signals and state confidence.",
-    "geography_default": "as requested per run"
+    "revenue_note": "Solo to lower-mid-market. Missing revenue/employee data is NOT disqualifying — score on available signals and state confidence."
   },
-  "hard_disqualifiers": [
-    "Business inactive, in liquidation, or deleted per registry (Handelsregister / North Data)",
-    "Placeholder, parked, or unfinished website",
-    "No phone AND no email (phone matters most: German law restricts cold email, calls come first)",
-    "Founder/owner not identifiable"
-  ],
+
   "positive_signals": [
     "Visible service pages and portfolio/case studies",
     "Founder with a personal brand (visible on site, LinkedIn, talks)",
@@ -48,10 +49,12 @@
     "No Impressum (for German companies — legally required, its absence is a red flag)",
     "Aggregator-only presence (only Yelp/Instagram, no own site)"
   ],
+
   "scoring": {
     "threshold": 60,
     "scale": "0-100 fit score",
-    "rules": "Out-of-scope industry caps the score at 20 regardless of seniority. Any hard disqualifier = 0. In-scope + founder identified + contactable by phone starts at 70; adjust with signals and firmographics."
+    "rules": "Any hard disqualifier or always_exclude match = score below threshold (0 for founder/website/phone failures, <=20 for always_exclude). Otherwise start from the QUALITY of the lead: an owner-led business in the requested industry, with a phone and a clean site, starts around 70; adjust up/down with the positive/negative signals and firmographics. Do NOT lower a score just because the industry isn't in default_target_market when that industry was explicitly requested."
   },
-  "per_run_overrides": "Merge any run-specific criteria the user states (e.g. 'website agencies, ~100k/month revenue, ~5 employees') over this file for that run only."
+
+  "per_run_overrides": "Merge any run-specific criteria the requester states (e.g. 'website agencies, ~100k/month revenue, ~5 employees') over this file for that run only."
 }

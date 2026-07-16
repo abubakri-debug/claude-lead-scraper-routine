@@ -30,21 +30,27 @@ Read `SKILL.md` for the full method, then run:
 
 ```
 pip install openpyxl >/dev/null 2>&1
-python3 scripts/routine_run.py --count <count> --location "<location>" --industry "<industry>" --gl <country-code>
+python3 scripts/routine_run.py --count <count> --location "<location>" --industry "<industry>" --country "<country>"
 ```
 
-`routine_run.py` handles discovery → email enrichment → North Data (public) → founder ID, with
-the volume cap (2.5× the request, max 150) already enforced. It stops at `work/icp_input.json`
-and prints `stage: ready_for_icp`.
+Pass `--country` as the raw text from the form (e.g. "Deutschland", "Germany", "de" all work —
+the script maps it to the right Serper code and appends the country to the location so an
+ambiguous city can't resolve abroad). `routine_run.py` handles discovery → email enrichment →
+North Data (public) → founder ID, with the volume cap (2.5× the request, max 150) enforced. It
+stops at `work/icp_input.json` and prints `stage: ready_for_icp`.
 
 ## 4. ICP scoring — YOUR judgment, never a category script
 
-Load `~/.claude/lead-scraper-icp.json` if present, else `assets/icp-default.json`. For EACH lead
-in `work/icp_input.json`, score 0–100 on lead-specific evidence (`categoryName`, `_site_excerpt`,
-founder/registry data, review count, chain markers). Web-search anything unclear or scoring above
-threshold. Out-of-scope industries cap at 20; hard disqualifiers = 0; chains/>500-employee firms
-are out. Write `icp_score` and a lead-specific `icp_reason` (one sentence, cite real evidence)
-back into `work/icp_input.json`. Do not template the reasons.
+Load `~/.claude/lead-scraper-icp.json` if present, else `assets/icp-default.json`. **The
+requested industry IS the target market for this run** (per `requested_industry_rule`) — treat it
+as in-scope and score on quality, never reject a lead just because its industry isn't in
+`default_target_market`. For EACH lead in `work/icp_input.json`, score 0–100 on lead-specific
+evidence (`categoryName`, `_site_excerpt`, founder/registry data, review count, chain markers);
+web-search anything unclear or scoring above threshold. Always-on filters regardless of industry:
+`always_exclude` (chains/branches, >500 employees, inactive, true competitors) score ≤20;
+`hard_disqualifiers` (no identifiable founder, placeholder/dead site, no phone) = 0. Write
+`icp_score` and a lead-specific `icp_reason` (one sentence citing real evidence) back into
+`work/icp_input.json`. Do not template the reasons.
 
 ## 5. Export + verify emails last
 
@@ -68,8 +74,14 @@ which appends to the sheet on its end. Confirm the delivered count and report an
 
 ## 7. Report honestly
 
-Print a short summary: requested vs delivered count, founder-source mix (impressum/registry/
-LinkedIn vs assumed), emails verified-valid vs shipped-unverified, registry-check coverage (say
-so plainly if Handelsregister/North Data came back mostly unchecked), and the sheet URL. Never
-imply verification that didn't happen. Commit any run artifacts to a `claude/leads-<date>` branch
-and also print the summary to stdout.
+Print a short summary to stdout: requested vs delivered count, founder-source mix (impressum/
+registry/LinkedIn vs assumed), emails verified-valid vs shipped-unverified, registry-check
+coverage (say so plainly if Handelsregister/North Data came back mostly unchecked), and the
+webhook delivery count. Never imply verification that didn't happen.
+
+Do NOT git-commit or push run artifacts — the deliverable is the webhook POST, not the repo, and
+the routine has no write access (push returns 403). Skip all git operations; just print the
+summary.
+
+If **zero** leads qualify, say so plainly and state the most likely reason (see the note on
+industry vs ICP at the top). Do not treat an empty result as success.

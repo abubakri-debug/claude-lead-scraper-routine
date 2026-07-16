@@ -24,6 +24,25 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
+# Country name/synonym -> Serper gl code + postal-prefix hints (guards against Serper resolving
+# an ambiguous city to the wrong country, e.g. "Mannheim" -> Michigan USA on the first run).
+COUNTRY = {
+    "de": ("de", "Germany"), "germany": ("de", "Germany"), "deutschland": ("de", "Germany"),
+    "at": ("at", "Austria"), "austria": ("at", "Austria"), "österreich": ("at", "Austria"),
+    "ch": ("ch", "Switzerland"), "switzerland": ("ch", "Switzerland"), "schweiz": ("ch", "Switzerland"),
+    "uk": ("gb", "United Kingdom"), "gb": ("gb", "United Kingdom"),
+    "united kingdom": ("gb", "United Kingdom"), "england": ("gb", "United Kingdom"),
+    "us": ("us", "USA"), "usa": ("us", "USA"), "united states": ("us", "USA"),
+    "fr": ("fr", "France"), "france": ("fr", "France"),
+    "es": ("es", "Spain"), "spain": ("es", "Spain"),
+    "nl": ("nl", "Netherlands"), "netherlands": ("nl", "Netherlands"),
+}
+
+
+def resolve_country(raw):
+    """Return (gl_code, country_name) from a free-text country field; default Germany."""
+    return COUNTRY.get((raw or "").strip().lower(), ("de", "Germany"))
+
 
 def sh(cmd):
     print("+ " + " ".join(cmd), flush=True)
@@ -39,15 +58,25 @@ def main():
     p.add_argument("--count", type=int, required=True, help="Lead count the requester asked for")
     p.add_argument("--location", required=True)
     p.add_argument("--industry", required=True)
-    p.add_argument("--gl", default="de", help="Serper country code (default de)")
+    p.add_argument("--gl", default="", help="Serper country code; if omitted, derived from --country")
+    p.add_argument("--country", default="", help="Free-text country (name or code); default Germany")
     p.add_argument("--workdir", default="work")
     args = p.parse_args()
 
     os.makedirs(args.workdir, exist_ok=True)
 
+    # Resolve country -> gl code + full name, and always give Serper a "City, Country" string so
+    # it can't drift to a same-named city abroad. --gl (if a valid 2-letter code) wins.
+    gl_from_country, country_name = resolve_country(args.country or args.gl)
+    gl = args.gl if (len(args.gl) == 2 and args.gl.isalpha()) else gl_from_country
+    location = args.location
+    if country_name.lower() not in location.lower() and "," not in location:
+        location = f"{args.location}, {country_name}"
+    print(f"Resolved: location='{location}', gl='{gl}'", flush=True)
+
     # Volume cap: 2.5x the request, hard-capped at 150 unless the requester named a bigger number.
     fetch = min(max(int(args.count * 2.5), args.count), 150)
-    print(f"Request: {args.count} {args.industry} in {args.location} → fetching {fetch} raw "
+    print(f"Request: {args.count} {args.industry} in {location} → fetching {fetch} raw "
           f"(2.5x buffer, capped 150).", flush=True)
 
     if not os.environ.get("APIFY_TOKEN") and not os.environ.get("SERPER_API_KEY"):
@@ -55,7 +84,7 @@ def main():
 
     raw = os.path.join(args.workdir, "raw.json")
     ok = sh(["python3", f"{HERE}/serper_leads.py", "discover",
-             "--search", args.industry, "--city", args.location, "--gl", args.gl,
+             "--search", args.industry, "--city", location, "--gl", gl,
              "--num", "20", "--output", raw])
     if not ok:
         sys.exit("Discovery failed — see stderr above.")
@@ -64,9 +93,9 @@ def main():
     enr = os.path.join(args.workdir, "enriched.json")
     nd = os.path.join(args.workdir, "nd.json")
     fnd = os.path.join(args.workdir, "founders.json")
-    sh(["python3", f"{HERE}/serper_leads.py", "emails", "--input", raw, "--output", e1, "--gl", args.gl])
+    sh(["python3", f"{HERE}/serper_leads.py", "emails", "--input", raw, "--output", e1, "--gl", gl])
     sh(["python3", f"{HERE}/enrich_emails.py", "--input", e1, "--output", enr])
-    sh(["python3", f"{HERE}/northdata.py", "free", "--input", enr, "--output", nd, "--gl", args.gl])
+    sh(["python3", f"{HERE}/northdata.py", "free", "--input", enr, "--output", nd, "--gl", gl])
     sh(["python3", f"{HERE}/founders.py", "--input", nd, "--output", fnd])
 
     icp_input = os.path.join(args.workdir, "icp_input.json")
