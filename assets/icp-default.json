@@ -7,15 +7,14 @@
   "target_roles": [
     "founder", "co-founder", "owner", "Inhaber", "Inhaberin",
     "Geschäftsführer", "Geschäftsführerin", "managing director",
-    "CEO of owner-led business"
+    "CEO of owner-led business", "consultant", "self-employed", "Eigentümer", "Managing Director", "Serial Entrepreneur", "Entrepreneur", "President"
   ],
   "role_rule": "Only the founder/owner counts as a lead. Employees, marketing managers, or generic company pages are not leads. This is mandatory on every run regardless of industry.",
 
   "default_target_market": [
     "Agency owners: marketing, creative, design, PR, media, branding, content, video, web design agencies",
     "Consultants (broad business sense): strategy, management, sales, finance, investment, HR, industry-specific consultancies",
-    "Coaches: business, executive, performance, life",
-    "E-commerce business owners"
+    "Coaches: business, executive, performance, life", "E-commerce business owners"
   ],
   "default_target_market_note": "Used only when NO specific industry is requested for the run. When a run names an industry, that industry is the target instead.",
 
